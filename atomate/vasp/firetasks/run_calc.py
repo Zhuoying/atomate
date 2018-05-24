@@ -69,14 +69,14 @@ class RunVaspCustodian(FiretaskBase):
         vasp_cmd (str): the name of the full executable for running VASP. Supports env_chk.
 
     Optional params:
-        job_type: (str) - choose from "normal" (default), "double_relaxation_run" (two consecutive 
+        job_type: (str) - choose from "normal" (default), "double_relaxation_run" (two consecutive
             jobs), "full_opt_run" (multiple optimizations), and "neb"
         handler_group: (str or [ErrorHandler]) - group of handlers to use. See handler_groups dict in the code for
             the groups and complete list of handlers in each group. Alternatively, you can
             specify a list of ErrorHandler objects.
-        max_force_threshold: (float) - if >0, adds MaxForceErrorHandler. Not recommended for 
+        max_force_threshold: (float) - if >0, adds MaxForceErrorHandler. Not recommended for
             nscf runs.
-        scratch_dir: (str) - if specified, uses this directory as the root scratch dir. 
+        scratch_dir: (str) - if specified, uses this directory as the root scratch dir.
             Supports env_chk.
         gzip_output: (bool) - gzip output (default=T)
         max_errors: (int) - maximum # of errors to fix before giving up (default=5)
@@ -173,6 +173,11 @@ class RunVaspCustodian(FiretaskBase):
 
             jobs = [VaspNEBJob(vasp_cmd, final=False, auto_npar=auto_npar,
                                gamma_vasp_cmd=gamma_vasp_cmd)]
+        elif 'converge':
+            jobs = VaspJob.converge_run(vasp_cmd, auto_npar=auto_npar,
+                                        property_to_vary='ENCUT',
+                                        property_iterable=range(200, 1000, 50),
+                                        energy_tol=0.01)
         else:
             raise ValueError("Unsupported job type: {}".format(job_type))
 
