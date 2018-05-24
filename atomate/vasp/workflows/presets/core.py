@@ -152,6 +152,22 @@ def wf_static(structure, c=None):
     return wf
 
 
+def wf_converge(structure, c=None):
+
+    c = c or {}
+    vasp_cmd = c.get("VASP_CMD", VASP_CMD)
+    db_file = c.get("DB_FILE", DB_FILE)
+
+    wf = get_wf(structure, "converge_only.yaml", vis=MPStaticSet(structure),
+                common_params={"vasp_cmd": vasp_cmd, "db_file": db_file})
+
+    wf = add_common_powerups(wf, c)
+
+    if c.get("ADD_WF_METADATA", ADD_WF_METADATA):
+        wf = add_wf_metadata(wf, structure)
+
+    return wf
+
 def wf_structure_optimization(structure, c=None):
 
     c = c or {}

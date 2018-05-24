@@ -234,7 +234,7 @@ class ConvergeFW(Firework):
         t.append(PassCalcLocs(name=name))
         t.append(
             VaspToDb(db_file=db_file, additional_fields={"task_label": name}))
-        super(StaticFW, self).__init__(t, parents=parents, name=fw_name, **kwargs)
+        super(ConvergeFW, self).__init__(t, parents=parents, name=fw_name, **kwargs)
 
 
 class HSEBSFW(Firework):
