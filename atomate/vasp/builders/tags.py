@@ -68,10 +68,17 @@ class TagsBuilder(AbstractBuilder):
                     if "_tagsbuilder" in m:
                         all_tasks.extend(m["_tagsbuilder"]["all_task_ids"])
 
-                    all_tags = list(set(all_tags))  # filter duplicates
-                    self._materials.update_one({"material_id": m["material_id"]},
-                                               {"$set": {"tags": all_tags,
-                                                         "_tagsbuilder.all_task_ids": all_tasks}})
+                    # filter duplicates; some tags are dicts so have to do this
+                    # long winded approach
+                    unique_tags = []
+                    for tag in all_tags:
+                        if tag not in unique_tags:
+                            unique_tags.append(tag)
+
+                    self._materials.update_one(
+                        {"material_id": m["material_id"]},
+                        {"$set": {"tags": unique_tags,
+                                  "_tagsbuilder.all_task_ids": all_tasks}})
 
             except:
                 import traceback
