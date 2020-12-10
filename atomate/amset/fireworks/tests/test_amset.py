@@ -38,6 +38,11 @@ class TestAmsetWF(AtomateTest):
 
         fw_ids = self.lp.add_wf(self.wf)
         fworker = FWorker(env={"db_file": db_dir / "db.json", "mp_db_file": mp_db_file})
+
+        if not Path(mp_db_file).exists():
+            # skip tests if file not present
+            return
+
         rapidfire(self.lp, fworker=fworker)
 
         # check workflow finished without error
