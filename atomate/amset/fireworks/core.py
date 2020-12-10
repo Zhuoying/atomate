@@ -71,6 +71,7 @@ class AmsetFW(Firework):
         if settings is not None:
             t.append(UpdateSettings(settings_updates=settings))
 
+        t.append(UpdateSettings(settings_updates=">>amset_settings_updates<<"))
         t.append(RunAmset())
         t.append(PassCalcLocs(name="amset"))
 
