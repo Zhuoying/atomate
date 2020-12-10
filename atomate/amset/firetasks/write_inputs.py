@@ -74,6 +74,29 @@ class UpdateSettings(FiretaskBase):
     Update amset settings from a dictionary.
 
     Required params:
+        settings_updates (Union[str, dict]): A dictionary of settings updates or env
+            chk string.
+    """
+
+    required_params = ["settings_updates"]
+
+    def run_task(self, fw_spec):
+        if Path("settings.yaml").exists():
+            settings = loadfn("settings.yaml")
+        else:
+            settings = {}
+
+        settings_updates = env_chk(self.get("settings_updates"), fw_spec)
+        settings.update(settings_updates)
+        dumpfn(settings, "settings.yaml")
+
+
+@explicit_serialize
+class UpdateSettingsEnvChk(FiretaskBase):
+    """
+    Update amset settings from a dictionary.
+
+    Required params:
         settings_updates (dict): A dictionary of settings updates.
     """
 
