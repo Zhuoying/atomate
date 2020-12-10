@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 @explicit_serialize
 class CopyInputs(CopyFiles):
     """
-    Copy input files from to the current directory.
+    Copy amset input files from to the current directory.
 
     Note that you must specify either "calc_loc" or "calc_dir" to indicate
     the directory containing the input files.
@@ -120,19 +120,15 @@ class CheckConvergence(FiretaskBase):
             settings = loadfn("settings.yaml")
             settings["interpolation_factor"] += inter_inc
             logger.info(
-                "amset results not converged, resubmitting with interpolation_factor: "
+                "Resubmitting with interpolation_factor: "
                 f"{settings['interpolation_factor']}"
             )
             fw = AmsetFW("prev", settings=settings, resubmit=True)
 
             # ensure to copy over fworker options to child firework
+            # also, manually update calc locs
             # TODO: Also copy db_file, additional_fields etc
-            fk = ["_fworker", "_category", "_queueadaptor"]
-
-            # manually update calc locs
-            calc_locs = fw_spec.get("calc_locs", [])
-            calc_locs.append({"name": "amset", "filesystem": None, "path": os.getcwd()})
-            fw.spec["calc_locs"] = calc_locs
+            fk = ["_fworker", "_category", "_queueadaptor", "calc_locs"]
 
             fw.spec.update({k: fw_spec[k] for k in fk if k in fw_spec})
             detours = [fw]
@@ -154,6 +150,7 @@ def _is_converged(new_transport, old_transport, tol, properties):
         diff[np.isnan(diff)] = 0
 
         if not np.all(diff <= tol):
+            logger.debug(f"{prop} is not converged: max diff: {np.max(diff) * 100} %")
             converged = False
     return converged
 

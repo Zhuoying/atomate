@@ -32,12 +32,12 @@ class AmsetFW(Firework):
                   Materials Project will be used as the input. Note, with this option,
                   `settings` must also be specified explicitly.
                 - "workflow": Determine all amset inputs from calculations in the
-                   current workflow. The vasprun (and wavefunction) will be obtained
-                   from the most recent NSCF calculation, materials properties will be
-                   determined from DFPT/elastic constant/deformation fireworks if they
-                   are included. Note, this option requires `settings` to be specified
-                   explicitly. Materials parameters not calculated as part of the
-                   workflow can be specified in the settings dict.
+                  current workflow. The vasprun (and wavefunction) will be obtained
+                  from the most recent NSCF calculation, materials properties will be
+                  determined from DFPT/elastic constant/deformation fireworks if they
+                  are included. Note, this option requires `settings` to be specified
+                  explicitly. Materials parameters not calculated as part of the
+                  workflow can be specified in the settings dict.
                 - "prev": Copy amset inputs from the previous calculation directory.
                   this can be selected when doing convergence of transport properties.
                   This option does not require settings to be specified explicitly.
@@ -72,12 +72,12 @@ class AmsetFW(Firework):
             t.append(UpdateSettings(settings_updates=settings))
 
         t.append(RunAmset())
+        t.append(PassCalcLocs(name="amset"))
 
         if resubmit:
             t.append(CheckConvergence())
 
         t.append(AmsetToDb(db_file=db_file, additional_fields=additional_fields))
-        t.append(PassCalcLocs(name="amset"))
 
         super(AmsetFW, self).__init__(t, parents=parents, name=name, **kwargs)
 
