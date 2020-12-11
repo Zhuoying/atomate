@@ -129,7 +129,7 @@ class ResubmitUnconverged(FiretaskBase):
     optional_params = ["interpolation_increase"]
 
     def run_task(self, fw_spec):
-        inter_inc = self.get("interpolation_increase") or 2
+        inter_inc = self.get("interpolation_increase") or 10
         converged = fw_spec.get("converged", True)
 
         if not converged:
