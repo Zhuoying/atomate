@@ -4,13 +4,14 @@ from pathlib import Path
 
 import numpy as np
 from monty.serialization import loadfn
+from pydash import get
 
 from amset.util import tensor_average
 from atomate.common.firetasks.glue_tasks import CopyFiles, get_calc_loc
-from atomate.utils.utils import get_logger, env_chk
+from atomate.utils.utils import get_logger
 from fireworks import explicit_serialize, FiretaskBase, FWAction
 
-_CONVERGENCE_PROPERTIES = ("mobility", "seebeck")
+_CONVERGENCE_PROPERTIES = ("mobility.overall", "seebeck")
 _INPUTS = [
     "settings.yaml",
     "vasprun.xml",
@@ -44,6 +45,7 @@ class CopyInputs(CopyFiles):
         filesystem = self.get("filesystem") or None
 
         if calc_loc:
+            print(fw_spec.get("calc_locs", []))
             calc_loc = get_calc_loc(self["calc_loc"], fw_spec["calc_locs"])
 
         self.setup_copy(
@@ -79,7 +81,7 @@ class CheckConvergence(FiretaskBase):
     current directory.
 
     Optional params:
-        tolerance (float): Relative convergence tolerance. Default is `0.05` (i.e. 5 %).
+        tolerance (float): Relative convergence tolerance. Default is `0.1` (i.e. 10 %).
         properties (list[str]): List of properties for which convergence is assessed.
             The calculation is only flagged as converged if all properties pass the
             convergence checks. Options are: "conductivity", "seebeck", "mobility",
@@ -89,7 +91,7 @@ class CheckConvergence(FiretaskBase):
     optional_params = ["tolerance", "properties"]
 
     def run_task(self, fw_spec):
-        tol = self.get("tolerance") or 0.05
+        tol = self.get("tolerance") or 0.1
         properties = self.get("properties") or _CONVERGENCE_PROPERTIES
 
         calc_locs = fw_spec.get("calc_locs", [])
@@ -97,14 +99,16 @@ class CheckConvergence(FiretaskBase):
         if len(calc_locs) > 0 and "amset" in calc_locs[-1]["name"]:
             transport_files = list(Path(calc_locs[-1]["path"]).glob("*transport_*"))
 
-            if len(transport_files) > 1:
+            if len(transport_files) > 0:
                 old_transport = loadfn(transport_files[-1])
+                logger.info(f"Using previous transport calculation: {transport_files[-1]}")
 
         if old_transport:
             # old calculation was found, we can now check for convergence
             new_transport = loadfn(next(Path(".").glob("*transport_*")))
             converged = _is_converged(new_transport, old_transport, tol, properties)
         else:
+            logger.info("No previous transport calculations found.")
             converged = False
 
         return FWAction(update_spec={"converged": converged})
@@ -125,7 +129,7 @@ class ResubmitUnconverged(FiretaskBase):
     optional_params = ["interpolation_increase"]
 
     def run_task(self, fw_spec):
-        inter_inc = self.get("interpolation_increase") or 10
+        inter_inc = self.get("interpolation_increase") or 2
         converged = fw_spec.get("converged", True)
 
         if not converged:
@@ -146,27 +150,31 @@ class ResubmitUnconverged(FiretaskBase):
 
             fw.spec.update({k: fw_spec[k] for k in fk if k in fw_spec})
             return FWAction(detours=[fw])
-        else:
-            logger.info("amset calculation is converged.")
 
 
 def _is_converged(new_transport, old_transport, tol, properties):
     """Check if all transport properties (averaged) are converged within the tol."""
     converged = True
     for prop in properties:
-        if prop not in new_transport and prop not in old_transport:
-            logger.warning(f"'{prop}' not in new or old transport data, skipping...")
+
+        new_prop = get(new_transport, prop, None)
+        old_prop = get(old_transport, prop, None)
+        if new_prop is None or old_prop is None:
+            logger.info(f"'{prop}' not in new or old transport data, skipping...")
             continue
 
-        new_prop = tensor_average(new_transport[prop])
-        old_prop = tensor_average(old_transport[prop])
-        diff: np.ndarray = (new_prop - old_prop) / new_prop
+        new_avg = tensor_average(new_prop)
+        old_avg = tensor_average(old_prop)
+        diff = np.abs((new_avg - old_avg) / new_avg)
         diff[np.isnan(diff)] = 0
 
         if not np.all(diff <= tol):
             logger.info(f"{prop} is not converged: max diff: {np.max(diff) * 100} %")
             converged = False
-    return converged
 
+    if converged:
+        logger.info("amset calculation is converged.")
+
+    return converged
 
 

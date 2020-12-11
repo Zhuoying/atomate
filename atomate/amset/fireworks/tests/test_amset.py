@@ -38,7 +38,8 @@ class TestAmsetWF(AtomateTest):
     def test_wf(self):
 
         fw_ids = self.lp.add_wf(self.wf)
-        fworker = FWorker(env={"db_file": db_dir / "db.json", "mp_db_file": mp_db_file})
+        fworker = FWorker(env={"db_file": db_dir / "db.json", "mp_db_file": mp_db_file,
+                               "amset_settings_updates": {"nworkers": 2}})
 
         if not Path(mp_db_file).exists():
             # skip tests if file not present

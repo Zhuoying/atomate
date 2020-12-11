@@ -74,11 +74,11 @@ class AmsetFW(Firework):
 
         t.append(UpdateSettings(settings_updates=">>amset_settings_updates<<"))
         t.append(RunAmset())
-        t.append(PassCalcLocs(name="amset"))
 
         if resubmit:
             t.append(CheckConvergence())
 
+        t.append(PassCalcLocs(name="amset"))
         t.append(AmsetToDb(db_file=db_file, additional_fields=additional_fields))
 
         if resubmit:
