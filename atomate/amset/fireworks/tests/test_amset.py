@@ -8,7 +8,7 @@ from atomate.amset.fireworks.core import AmsetFW
 module_dir = Path(__file__).resolve().parent
 db_dir = module_dir / "../../../common/test_files"
 ref_dir = module_dir / "../../test_files"
-mp_db_file = "/Users/alex/Google Drive/dev/notebooks/2019-08-AMSET/mp_db.json"
+mp_db_file = "/Users/alex/Google Drive/dev/notebooks/2020-12-AMSET-MP/mp_db.json"
 
 
 class TestAmsetWF(AtomateTest):
@@ -19,6 +19,7 @@ class TestAmsetWF(AtomateTest):
             # general settings
             "doping": [-1e14, -1e15],
             "temperatures": [200, 300],
+            "scissor": 2,
             "interpolation_factor": 2,
             "deformation_potential": (1.2, 8.6),
             "elastic_constant": 139.7,

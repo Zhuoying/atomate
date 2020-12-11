@@ -84,19 +84,13 @@ class CheckConvergence(FiretaskBase):
             The calculation is only flagged as converged if all properties pass the
             convergence checks. Options are: "conductivity", "seebeck", "mobility",
             "electronic thermal conductivity". Default is `["mobility", "seebeck"]`.
-        resubmit (bool): Whether to submit an additional amset Firework with a larger
-            interpolation factor after the current task. Default is `True`.
-        interpolation_increase (int): Absolute amount by which to increase interpolation
-            factor if resubmitting. Default is `10`.
     """
 
-    optional_params = ["tolerance", "properties", "resubmit", "interpolation_increase"]
+    optional_params = ["tolerance", "properties"]
 
     def run_task(self, fw_spec):
         tol = self.get("tolerance") or 0.05
         properties = self.get("properties") or _CONVERGENCE_PROPERTIES
-        resubmit = self.get("resubmit") or True
-        inter_inc = self.get("interpolation_increase") or 10
 
         calc_locs = fw_spec.get("calc_locs", [])
         old_transport = None
@@ -113,8 +107,28 @@ class CheckConvergence(FiretaskBase):
         else:
             converged = False
 
-        detours = None
-        if not converged and resubmit:
+        return FWAction(update_spec={"converged": converged})
+
+
+@explicit_serialize
+class ResubmitUnconverged(FiretaskBase):
+    """
+    Detours to an amset calculation with a larger interpolation factor if unconverged.
+
+    Expect the "converged" key to be in the firework spec.
+
+    Optional params:
+        interpolation_increase (int): Absolute amount by which to increase interpolation
+            factor if resubmitting. Default is `10`.
+    """
+
+    optional_params = ["interpolation_increase"]
+
+    def run_task(self, fw_spec):
+        inter_inc = self.get("interpolation_increase") or 10
+        converged = fw_spec.get("converged", True)
+
+        if not converged:
             from atomate.amset.fireworks.core import AmsetFW
 
             settings = loadfn("settings.yaml")
@@ -131,9 +145,9 @@ class CheckConvergence(FiretaskBase):
             fk = ["_fworker", "_category", "_queueadaptor", "calc_locs"]
 
             fw.spec.update({k: fw_spec[k] for k in fk if k in fw_spec})
-            detours = [fw]
-
-        return FWAction(update_spec={"converged": converged}, detours=detours)
+            return FWAction(detours=[fw])
+        else:
+            logger.info("amset calculation is converged.")
 
 
 def _is_converged(new_transport, old_transport, tol, properties):
@@ -150,7 +164,7 @@ def _is_converged(new_transport, old_transport, tol, properties):
         diff[np.isnan(diff)] = 0
 
         if not np.all(diff <= tol):
-            logger.debug(f"{prop} is not converged: max diff: {np.max(diff) * 100} %")
+            logger.info(f"{prop} is not converged: max diff: {np.max(diff) * 100} %")
             converged = False
     return converged
 

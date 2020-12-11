@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, Union, List
 
-from atomate.amset.firetasks.glue_tasks import CheckConvergence, CopyInputs
+from atomate.amset.firetasks.glue_tasks import CheckConvergence, CopyInputs, \
+    ResubmitUnconverged
 from atomate.amset.firetasks.parse_outputs import AmsetToDb
 from atomate.amset.firetasks.run_calc import RunAmset
 from atomate.amset.firetasks.write_inputs import UpdateSettings, WriteInputsFromMp
@@ -79,6 +80,9 @@ class AmsetFW(Firework):
             t.append(CheckConvergence())
 
         t.append(AmsetToDb(db_file=db_file, additional_fields=additional_fields))
+
+        if resubmit:
+            t.append(ResubmitUnconverged())
 
         super(AmsetFW, self).__init__(t, parents=parents, name=name, **kwargs)
 
