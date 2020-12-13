@@ -73,8 +73,18 @@ class AmsetToDb(FiretaskBase):
         # insert mesh if calculation is converged or convergence is not known
         mesh = None
         mesh_files = list(Path(".").glob("*mesh_*"))
-        if converged is not False and len(mesh_files) > 0:
-            mesh = _mesh_to_json(load_mesh(mesh_files[0]))
+        if len(mesh_files) > 0:
+            mesh_data = load_mesh(mesh_files[0])
+            doc.update(
+                {
+                   "is_metal": mesh_data["is_metal"],
+                   "scattering_labels": mesh_data["scattering_labels"],
+                   "soc": mesh_data["soc"],
+                }
+            )
+            if converged is not False:
+                # only store mesh if results not converged or converged not set
+                mesh = _mesh_to_json(mesh_data)
 
         # insert structure information
         bs = _get_band_structure()
@@ -101,7 +111,7 @@ class AmsetToDb(FiretaskBase):
 
             if mesh:
                 fsid, _ = mmdb.insert_gridfs(mesh, collection="amset_fs", compress=True)
-                doc["mesh_fs_id"] = fsid
+                doc["amset_fs_id"] = fsid
 
             mmdb.db.amset.insert(jsanitize(doc, allow_bson=True))
         else:

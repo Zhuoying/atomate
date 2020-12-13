@@ -15,6 +15,7 @@ class AmsetFW(Firework):
         self,
         input_source: str,
         settings: Optional[Dict[str, Any]] = None,
+        convergence_tol=0.1,
         resubmit: bool = False,
         db_file: str = DB_FILE,
         additional_fields: Optional[Dict[str, Any]] = None,
@@ -45,8 +46,9 @@ class AmsetFW(Firework):
             settings: AMSET settings, including materials parameters and temperature/
                 doping selections. See the amset documentation for the available
                 options.
-            resubmit (bool): Whether to submit an additional amset Firework with a
-                larger interpolation factor after the current task. Default is `False`.
+            convergence_tol: Relative tolerance for checking amset property convergence.
+            resubmit: Whether to submit an additional amset Firework with a larger
+                interpolation factor after the current task.
             db_file: Path to file specifying db credentials.
             additional_fields: Fields added to the document such as
                 user-defined tags or name, ids, etc.
@@ -76,7 +78,7 @@ class AmsetFW(Firework):
         t.append(RunAmset())
 
         if resubmit:
-            t.append(CheckConvergence())
+            t.append(CheckConvergence(tolerance=convergence_tol))
 
         t.append(PassCalcLocs(name="amset"))
         t.append(AmsetToDb(db_file=db_file, additional_fields=additional_fields))

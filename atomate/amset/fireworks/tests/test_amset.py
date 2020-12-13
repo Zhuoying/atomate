@@ -32,7 +32,9 @@ class TestAmsetWF(AtomateTest):
             "use_projections": True,
             "nworkers": 2
         }
-        amset_fw = AmsetFW("mp-2534", settings=settings, resubmit=True)
+        amset_fw = AmsetFW(
+            "mp-2534", settings=settings, resubmit=True, convergence_tol=1
+        )
         self.wf = Workflow([amset_fw])
 
     def test_wf(self):

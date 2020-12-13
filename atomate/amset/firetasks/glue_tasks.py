@@ -45,7 +45,6 @@ class CopyInputs(CopyFiles):
         filesystem = self.get("filesystem") or None
 
         if calc_loc:
-            print(fw_spec.get("calc_locs", []))
             calc_loc = get_calc_loc(self["calc_loc"], fw_spec["calc_locs"])
 
         self.setup_copy(
@@ -145,7 +144,8 @@ class ResubmitUnconverged(FiretaskBase):
 
             # ensure to copy over fworker options to child firework
             # also, manually update calc locs
-            # TODO: Also copy db_file, additional_fields etc
+            # TODO: Also copy db_file, additional_fields, as well as all other firetask
+            #  kwargs
             fk = ["_fworker", "_category", "_queueadaptor", "calc_locs"]
 
             fw.spec.update({k: fw_spec[k] for k in fk if k in fw_spec})
@@ -166,10 +166,13 @@ def _is_converged(new_transport, old_transport, tol, properties):
         new_avg = tensor_average(new_prop)
         old_avg = tensor_average(old_prop)
         diff = np.abs((new_avg - old_avg) / new_avg)
-        diff[np.isnan(diff)] = 0
+        diff[~np.isfinite(diff)] = 0
 
-        if not np.all(diff <= tol):
-            logger.info(f"{prop} is not converged: max diff: {np.max(diff) * 100} %")
+        # don't check convergence of very small numbers due to numerical noise
+        less_than_one = (new_avg < 1) & (old_avg < 1)
+        element_converged = less_than_one | (diff <= tol)
+        if not np.all(element_converged):
+            logger.info(f"{prop} is not converged - max diff: {np.max(diff) * 100} %")
             converged = False
 
     if converged:
