@@ -169,7 +169,7 @@ def _is_converged(new_transport, old_transport, tol, properties):
         diff[~np.isfinite(diff)] = 0
 
         # don't check convergence of very small numbers due to numerical noise
-        less_than_one = (new_avg < 1) & (old_avg < 1)
+        less_than_one = (np.abs(new_avg) < 1) & (np.abs(old_avg) < 1)
         element_converged = less_than_one | (diff <= tol)
         if not np.all(element_converged):
             logger.info(f"{prop} is not converged - max diff: {np.max(diff) * 100} %")
