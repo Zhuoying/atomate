@@ -1,14 +1,23 @@
+import json
+
+import zlib
+
+import gridfs
+from gridfs import NoFile
 from pathlib import Path
 
 from monty.serialization import dumpfn, loadfn
 
 from pymatgen import Structure
-from atomate.utils.utils import env_chk
+from atomate.utils.utils import env_chk, get_logger
 from atomate.vasp.database import VaspCalcDb
 from fireworks import FiretaskBase, explicit_serialize
+from pymatgen.electronic_structure.bandstructure import BandStructure
 
 __author__ = "Alex Ganose"
 __email__ = "aganose@lbl.gov"
+
+logger = get_logger(__name__)
 
 
 @explicit_serialize
@@ -42,8 +51,20 @@ class WriteInputsFromMp(FiretaskBase):
         nelect = result["calcs_reversed"][0]["output"]["outcar"]["nelect"]
         structure = Structure.from_dict(result["output"]["structure"])
 
-        # get the band structure object with projections
-        band_structure = calc_db.get_band_structure(task_id=bs_id)
+        try:
+            # get the band structure object with projections
+            band_structure = calc_db.get_band_structure(task_id=bs_id)
+        except gridfs.errors.NoFile:
+            print(bs_id)
+            logger.info(f"VaspCalcDb failed to get band structure for task {bs_id}. "
+                        "Querying GridFS directly.")
+            result = calc_db.db.bandstructure_fs.files.find_one(
+                {"metadata.task_id": bs_id}, ["_id"]
+            )
+            fs = gridfs.GridFS(calc_db.db, "bandstructure_fs")
+            bs_json = zlib.decompress(fs.get(result["_id"]).read())
+            obj_dict = json.loads(bs_json.decode())
+            band_structure = BandStructure.from_dict(obj_dict)
 
         # set the structure explicitly, as some band structure objects do not include it
         band_structure.structure = structure
