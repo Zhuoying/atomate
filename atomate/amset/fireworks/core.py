@@ -66,7 +66,7 @@ class AmsetFW(Firework):
             raise NotImplemented("Workflow input source not yet implemented")
         elif input_source == "prev":
             t.append(CopyInputs(calc_loc=True))
-        elif "mvs" or input_source or "mp" in input_source:
+        elif "mvs" in input_source or "mp" in input_source:
             t.append(WriteInputsFromMp(mp_id=input_source))
         else:
             raise ValueError(f"Unrecognised input source: {input_source}")
