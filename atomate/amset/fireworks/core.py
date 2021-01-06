@@ -57,6 +57,7 @@ class AmsetFW(Firework):
             **kwargs: Other kwargs that are passed to Firework.__init__.
         """
         t = []
+        additional_fields = additional_fields or {}
         if settings is None and input_source != "prev":
             raise ValueError(
                 f"Settings must be specified for with {input_source} as input source"
