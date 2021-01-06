@@ -772,7 +772,7 @@ def add_tags(original_wf, tags_list):
             original_wf.fws[idx_fw].spec["tags"] = tags_list
 
     # DB insertion tasks
-    for constraint in ["VaspToDb", "BoltztrapToDb"]:
+    for constraint in ["VaspToDb", "BoltztrapToDb", "AmsetToDb"]:
         idxs = get_fws_and_tasks(original_wf, task_name_constraint=constraint)
         for idx_fw, idx_t in idxs:
             if "tags" in original_wf.fws[idx_fw].tasks[idx_t]["additional_fields"]:

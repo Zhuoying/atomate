@@ -140,11 +140,23 @@ class ResubmitUnconverged(FiretaskBase):
                 "Resubmitting with interpolation_factor: "
                 f"{settings['interpolation_factor']}"
             )
-            fw = AmsetFW("prev", settings=settings, resubmit=True)
+
+            check_conv = [t for t in fw_spec["_tasks"] if "CheckConvergence" in t["_fw_name"]][0]
+            to_db = [t for t in fw_spec["_tasks"] if "ToDb" in t["_fw_name"]][0]
+            convergence_tol = check_conv.get("tolerance", 0.1)
+            additional_fields = to_db.get("additional_fields")
+
+            fw = AmsetFW(
+                "prev",
+                settings=settings,
+                resubmit=True,
+                additional_fields=additional_fields,
+                convergence_tol=convergence_tol
+            )
 
             # ensure to copy over fworker options to child firework
             # also, manually update calc locs
-            # TODO: Also copy db_file, additional_fields, as well as all other firetask
+            # TODO: Also copy db_file, as well as all other firetask
             #  kwargs
             fk = ["_fworker", "_category", "_queueadaptor", "calc_locs"]
 
