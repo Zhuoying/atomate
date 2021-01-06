@@ -55,7 +55,6 @@ class WriteInputsFromMp(FiretaskBase):
             # get the band structure object with projections
             band_structure = calc_db.get_band_structure(task_id=bs_id)
         except gridfs.errors.NoFile:
-            print(bs_id)
             logger.info(f"VaspCalcDb failed to get band structure for task {bs_id}. "
                         "Querying GridFS directly.")
             result = calc_db.db.bandstructure_fs.files.find_one(
