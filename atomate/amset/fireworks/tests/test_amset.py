@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from atomate.vasp.powerups import add_tags
 from fireworks import FWorker, Workflow
 from fireworks.core.rocket_launcher import rapidfire
 from atomate.utils.testing import AtomateTest
@@ -30,18 +31,23 @@ class TestAmsetWF(AtomateTest):
             "pop_frequency": 8.16,
             "write_mesh": True,
             "use_projections": True,
-            "nworkers": 2
+            "nworkers": 4
         }
+        # amset_fw = AmsetFW(
+        #     "mp-2534", settings=settings, resubmit=True, convergence_tol=1
+        # )
         amset_fw = AmsetFW(
-            "mp-2534", settings=settings, resubmit=True, convergence_tol=1
+            "mp-989551", settings=settings, resubmit=True, convergence_tol=0.4,
         )
-        self.wf = Workflow([amset_fw])
+        wf = Workflow([amset_fw])
+        wf = add_tags(wf, ["mp-989551"])
+        self.wf = wf
 
     def test_wf(self):
 
         fw_ids = self.lp.add_wf(self.wf)
         fworker = FWorker(env={"db_file": db_dir / "db.json", "mp_db_file": mp_db_file,
-                               "amset_settings_updates": {"nworkers": 2}})
+                               "amset_settings_updates": {"nworkers": 4}})
 
         if not Path(mp_db_file).exists():
             # skip tests if file not present
