@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 from pathlib import Path
 
@@ -155,12 +156,16 @@ class ResubmitUnconverged(FiretaskBase):
             )
 
             # ensure to copy over fworker options to child firework
-            # also, manually update calc locs
             # TODO: Also copy db_file, as well as all other firetask
             #  kwargs
-            fk = ["_fworker", "_category", "_queueadaptor", "calc_locs"]
-
+            fk = ["_fworker", "_category", "_queueadaptor"]
             fw.spec.update({k: fw_spec[k] for k in fk if k in fw_spec})
+
+            # manually update/create calc locs
+            calc_locs = deepcopy(fw_spec.get("calc_locs", []))
+            calc_locs.append({"name": "amset", "filesystem": None, "path": os.getcwd()})
+            fw.spec["calc_locs"] = calc_locs
+
             return FWAction(detours=[fw])
 
 

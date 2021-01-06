@@ -5,7 +5,6 @@ from atomate.amset.firetasks.glue_tasks import CheckConvergence, CopyInputs, \
 from atomate.amset.firetasks.parse_outputs import AmsetToDb
 from atomate.amset.firetasks.run_calc import RunAmset
 from atomate.amset.firetasks.write_inputs import UpdateSettings, WriteInputsFromMp
-from atomate.common.firetasks.glue_tasks import PassCalcLocs
 from atomate.vasp.config import DB_FILE
 from fireworks import Firework
 
@@ -81,7 +80,6 @@ class AmsetFW(Firework):
         if resubmit:
             t.append(CheckConvergence(tolerance=convergence_tol))
 
-        t.append(PassCalcLocs(name="amset"))
         t.append(AmsetToDb(db_file=db_file, additional_fields=additional_fields))
 
         if resubmit:
