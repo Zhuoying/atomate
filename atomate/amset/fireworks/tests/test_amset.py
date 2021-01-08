@@ -9,7 +9,7 @@ from atomate.amset.fireworks.core import AmsetFW
 module_dir = Path(__file__).resolve().parent
 db_dir = module_dir / "../../../common/test_files"
 ref_dir = module_dir / "../../test_files"
-mp_db_file = "/Users/alex/Google Drive/dev/notebooks/2020-12-AMSET-MP/mp_db.json"
+mp_db_file = "/Users/alex/Google Drive/dev/notebooks/2020-12-AMSET-MP/mp_db_prod.json"
 
 
 class TestAmsetWF(AtomateTest):
@@ -37,7 +37,7 @@ class TestAmsetWF(AtomateTest):
         #     "mp-2534", settings=settings, resubmit=True, convergence_tol=1
         # )
         amset_fw = AmsetFW(
-            "mp-989551", settings=settings, resubmit=True, convergence_tol=0.4,
+            "mp-1100908", settings=settings, resubmit=True, convergence_tol=0.4,
         )
         wf = Workflow([amset_fw])
         wf = add_tags(wf, ["mp-989551"])

@@ -38,32 +38,34 @@ class WriteInputsFromMp(FiretaskBase):
         calc_db = VaspCalcDb.from_db_file(mp_db_file, admin=False)
 
         # get uniform band structure task id from materials collection
-        result = calc_db.db.materials.core.find_one(
-            {"task_id": mp_id}, ["bandstructure.uniform_task"]
+        result = calc_db.db.materials_2020_09_08.find_one(
+            {"task_id": mp_id}, ["blessed_tasks"]
         )
-        bs_id = result["bandstructure"]["uniform_task"]
+        if "blessed_tasks" not in result:
+            raise ValueError(f"No blessed tasks for: {mp_id}")
+
+        bs_id = [v for k, v in result["blessed_tasks"].items() if "Uniform" in k]
+        if len(bs_id) < 0:
+            raise ValueError(f"No blessed Uniform tasks for: {mp_id}")
+        bs_id = bs_id[0]
 
         # get NELECT and structure from task
         result = calc_db.db.tasks.find_one(
             {"task_id": bs_id},
             ["calcs_reversed.output.outcar.nelect", "output.structure"]
         )
+
         nelect = result["calcs_reversed"][0]["output"]["outcar"]["nelect"]
         structure = Structure.from_dict(result["output"]["structure"])
 
-        try:
-            # get the band structure object with projections
-            band_structure = calc_db.get_band_structure(task_id=bs_id)
-        except gridfs.errors.NoFile:
-            logger.info(f"VaspCalcDb failed to get band structure for task {bs_id}. "
-                        "Querying GridFS directly.")
-            result = calc_db.db.bandstructure_fs.files.find_one(
-                {"metadata.task_id": bs_id}, ["_id"]
-            )
-            fs = gridfs.GridFS(calc_db.db, "bandstructure_fs")
-            bs_json = zlib.decompress(fs.get(result["_id"]).read())
-            obj_dict = json.loads(bs_json.decode())
-            band_structure = BandStructure.from_dict(obj_dict)
+        logger.info(f"Getting band structure for: {bs_id}")
+        result = calc_db.db.bandstructure_fs.files.find_one(
+            {"metadata.task_id": bs_id}, ["_id"]
+        )
+        fs = gridfs.GridFS(calc_db.db, "bandstructure_fs")
+        bs_json = zlib.decompress(fs.get(result["_id"]).read())
+        obj_dict = json.loads(bs_json.decode())
+        band_structure = BandStructure.from_dict(obj_dict)
 
         # set the structure explicitly, as some band structure objects do not include it
         band_structure.structure = structure
