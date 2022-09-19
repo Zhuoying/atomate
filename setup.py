@@ -24,7 +24,7 @@ if __name__ == "__main__":
         install_requires=['FireWorks>=1.4.0', 'pymatgen>=2020.9.14',
                           'custodian>=2019.8.24', 'monty>=2.0.6',
                           'tqdm>=4.7.4',
-                          'pymatgen-diffusion>=2018.1.4',
+                          'pymatgen-analysis-diffusion>=2021.3.5',
                           'pydash>=4.1.0',
                           'pyyaml>=5.1.2'],
         extras_require={'rtransfer': ['paramiko>=2.4.2'],
